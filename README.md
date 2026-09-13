@@ -174,8 +174,8 @@ For running tests directly:
 ### Clone
 
 ```bash
-git clone https://github.com/ErmaoCyber/WorkerDataBlockchain.git
-cd WorkerDataBlockchain
+git clone https://github.com/ErmaoCyber/worker-data-platform.git
+cd worker-data-platform
 ```
 
 ### Environment variables
