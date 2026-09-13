@@ -1,125 +1,263 @@
-# WorkDataBlockchain
+# Worker Data Platform
 
-A blockchain-based proof-of-concept platform that gives workers ownership and control over their personal and professional data. Employers must submit access requests to view worker data, and all authorization events are recorded on the blockchain as an immutable audit trail.
+A full-stack platform for worker-controlled access to personal and professional data.
 
-## Tech Stack
+Employers can request access to specific worker information, workers can approve or reject those requests and define how long approved access remains valid, and important access events can be recorded on a blockchain-backed audit trail.
 
-**Frontend:** React, Next.js, TypeScript, Tailwind CSS
+## Project background
 
-**Backend:** ASP.NET Core (C#), PostgreSQL (hosted on Supabase), Supabase Auth
+This project was developed collaboratively as a team project.
 
-**Blockchain:** 
+Original team repository:
 
-## Project Structure
+https://github.com/mussesseiniris/WorkerDataBlockchain
 
+## Core workflow
+
+```text
+Employer creates access request
+        |
+        v
+Worker reviews requested information
+        |
+        +--> Approve selected items
+        |
+        +--> Reject selected items
+        |
+        v
+Worker sets access expiry
+        |
+        v
+Employer can view approved, unexpired data
+        |
+        v
+Notifications and audit events are recorded
 ```
-worker-data-blockchain/
-  wdb-frontend/       ← Next.js frontend
-  wdb-backend/        ← ASP.NET Core backend
-  wdb-blockchain/      ← to be initialized
+
+## Architecture
+
+```text
+Browser
+   |
+   v
+Next.js / React / TypeScript
+   |
+   | REST API + SignalR
+   v
+ASP.NET Core
+   |
+   +----------------------+----------------------+-------------------+
+   |                      |                      |                   |
+   v                      v                      v                   v
+EF Core               SignalR / MediatR     Supabase Storage    Nethereum
+   |                                                                  |
+   v                                                                  v
+PostgreSQL                                                       Hardhat / Solidity
 ```
 
-## Prerequisites
+PostgreSQL remains the source of truth for application data. The blockchain is used as an audit layer rather than as the primary data store.
 
-To run the application:
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+Actual personal data values are not stored on-chain.
 
-To run tests locally:
-- .NET SDK >= 10.0
-- Node.js >= 18
+## Tech stack
 
-## Getting Started
+### Frontend
 
-### 1. Clone the repository
+- Next.js
+- React
+- TypeScript
+- Tailwind CSS
+- SignalR client
+- Jest
+- React Testing Library
+
+### Backend
+
+- C#
+- ASP.NET Core
+- Entity Framework Core
+- PostgreSQL
+- JWT Bearer authentication
+- MediatR
+- SignalR
+- Swagger / OpenAPI
+
+### Storage and blockchain
+
+- PostgreSQL hosted on Supabase
+- Supabase Storage
+- Solidity
+- Hardhat
+- Nethereum
+
+### Development and CI
+
+- Docker
+- Docker Compose
+- GitHub Actions
+- xUnit
+- Moq
+
+## Key domain concepts
+
+### Request
+
+An employer creates a request describing why access is needed and which worker information is being requested.
+
+### Permission
+
+A request can contain multiple permissions. Each permission represents access to a specific field or data item and can be approved or rejected independently.
+
+### Access expiry
+
+The worker chooses the expiry date when approving access. Approved data is only available while the request remains active and unexpired.
+
+### Audit trail
+
+Events such as request creation, approval, rejection, data viewing, revocation, and review can be recorded as blockchain audit events.
+
+## Real-time notifications
+
+Notifications use MediatR for in-process application events and SignalR for real-time delivery to the frontend.
+
+```text
+Business action
+   |
+   v
+NotificationCommand
+   |
+   v
+MediatR
+   |
+   v
+NotificationEvent
+   |
+   +--> Persist notification
+   |
+   +--> SignalR push
+```
+
+## My contributions
+
+I worked across both frontend and backend, mainly on:
+
+- Worker and employer dashboard development
+- Active-access filtering and access-control workflows
+- Worker-controlled access expiry
+- Worker-facing audit views and blockchain audit integration
+- Automated backend and frontend testing
+
+## Repository structure
+
+```text
+wdb-frontend/       Next.js frontend
+wdb-backend/        ASP.NET Core backend
+wdb-backend.Tests/  Backend tests
+wdb-blockchain/     Solidity / Hardhat project
+.github/workflows/  GitHub Actions CI
+docker-compose.yml
+```
+
+## Getting started
+
+### Prerequisites
+
+For the full application:
+
+- Docker Desktop
+
+For running tests directly:
+
+- .NET SDK 10
+- Node.js 18 or newer
+
+### Clone
 
 ```bash
-git clone https://github.com/mussesseiniris/WorkerDataBlockchain.git
-cd worker-data-blockchain
+git clone https://github.com/ErmaoCyber/WorkerDataBlockchain.git
+cd WorkerDataBlockchain
 ```
 
-### 2. Set up environment variables
+### Environment variables
 
-Create a `.env` file in the root directory:
+Create a root `.env` file from the provided example:
 
 ```bash
 cp .env.example .env
 ```
 
-Open `.env` and fill in the database password (find it in the Slack chatbox):
+Configure the required PostgreSQL, Supabase Storage, and blockchain values locally.
 
-```
-CONNECTION_STRING=Host=aws-1-ap-northeast-2.pooler.supabase.com;Database=postgres;Username=postgres.kkrkhfzsoudhgjnyxxuv;Password=YOUR-PASSWORD;SSL Mode=Require;Trust Server Certificate=true
-```
+Do not commit passwords, service-role credentials, or private keys.
 
-### 3. Start the application
+### Run with Docker
 
 ```bash
 docker compose up
 ```
 
-- Frontend: http://localhost:3000
-- Backend: http://localhost:5258
-- Swagger UI: http://localhost:5258/swagger (development only)
+Local services:
 
-#### Useful Docker commands
+```text
+Frontend: http://localhost:3000
+Backend:  http://localhost:5258
+Swagger:  http://localhost:5258/swagger
+```
 
-| Command | Description |
-|---|---|
-| `docker compose up` | Start all services |
-| `docker compose up --build` | Rebuild and start (use this after pulling new changes) |
-| `docker compose down` | Stop and remove containers |
+Rebuild after dependency or Dockerfile changes:
+
+```bash
+docker compose up --build
+```
+
+Stop the application:
+
+```bash
+docker compose down
+```
 
 ## Testing
 
-Tests run locally and do not require Docker or a database connection.
+### Backend
 
-### 1. Install test dependencies
-
-**Mac** (requires [Homebrew](https://brew.sh)):
+From the repository root:
 
 ```bash
-brew install node
-brew install --cask dotnet-sdk
-```
-
-**Windows** (winget is built into Windows 10/11):
-
-```bash
-winget install OpenJS.NodeJS
-winget install Microsoft.DotNet.SDK.10
-```
-
-### 2. Run tests
-
-**Frontend:**
-
-```bash
-cd wdb-frontend
-npm test
-```
-
-**Backend:**
-
-```bash
-cd worker-data-blockchain
 dotnet test
 ```
 
-## CI
+### Frontend
 
-GitHub Actions automatically runs backend and frontend tests when code is pushed to `main` or a pull request is opened against `main`.
+```bash
+cd wdb-frontend
+npm ci
+npm test
+```
 
-## Code Style
+## Continuous integration
 
-This project uses Prettier and EditorConfig to enforce consistent formatting. Your IDE will pick up the rules automatically.
+GitHub Actions runs backend and frontend checks for pushes to `main` and pull requests targeting `main`.
 
-- Indent: 2 spaces (4 spaces for C#)
-- Quotes: single quotes (frontend)
-- Semicolons: yes
+Backend CI:
 
-**Required VS Code extensions:**
+```text
+restore -> build -> test
+```
 
-- Prettier - Code formatter (enable `Format On Save`)
-- EditorConfig for VS Code
-- ES7+ React/Redux/React-Native snippets
-- Tailwind CSS IntelliSense
+Frontend CI:
+
+```text
+npm ci -> npm test
+```
+
+The current workflow provides continuous integration only; production deployment is not automated by this repository.
+
+## Engineering trade-offs
+
+This project was built as a proof of concept, so some implementation choices are intentionally simpler than they would be in a production system.
+
+- PostgreSQL is the primary source of business state; blockchain records audit metadata only.
+- Blockchain availability is kept separate from core application functionality in parts of the system.
+- The local blockchain setup is designed for development and demonstration rather than production gas efficiency.
+- Some blockchain queries scan and filter events in application code, which would need a more scalable indexing strategy at higher volume.
+- A production version would need stronger secrets management, retry and idempotency handling, deployment automation, and broader integration testing.
